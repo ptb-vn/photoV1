@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeachBooth ✨ - Chụp Ảnh Dải Dễ Thương</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts hỗ trợ tiếng Việt dễ thương -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Pacifico&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Quicksand', 'sans-serif'],
+                        cute: ['Pacifico', 'cursive'],
+                    },
+                    colors: {
+                        pinky: {
+                            50: '#FFF5F8',
+                            100: '#FFE8F0',
+                            200: '#FFD1E0',
+                            300: '#FFA8C5',
+                            400: '#FF7AA8',
+                            500: '#F44D87',
+                            600: '#D92E6B',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Tùy chỉnh thanh cuộn mềm mại màu hồng */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FFF5F8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FFA8C5;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF7AA8;
+        }
+
+        /* Hiệu ứng nền chấm bi nhẹ nhàng */
+        body {
+            background-color: #FFF5F8;
+            background-image: radial-gradient(#FFD1E0 1.2px, transparent 1.2px);
+            background-size: 24px 24px;
+        }
+
+        /* Hiệu ứng chớp đèn Flash khi chụp */
+        @keyframes flashAnim {
+            0% { opacity: 0.95; }
+            100% { opacity: 0; }
+        }
+        .flash-active {
+            animation: flashAnim 0.45s ease-out forwards;
+        }
+
+        /* Hiệu ứng đếm ngược nảy nhẹ */
+        @keyframes popCount {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .countdown-pop {
+            animation: popCount 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Đổ bóng dễ thương kiểu dải ảnh thật */
+        .strip-shadow {
+            box-shadow: 0 18px 38px -10px rgba(244, 77, 135, 0.22), 0 8px 16px -6px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Lật gương cho video */
+        .mirror-video {
+            transform: scaleX(-1);
+        }
+    </style>
+</head>
+<body class="text-slate-700 min-h-screen flex flex-col selection:bg-pinky-200 selection:text-pinky-600">
+
+    <!-- Thanh Toast Thông Báo (Thay thế alert) -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Header -->
+    <header class="w-full bg-white/80 backdrop-blur-md border-b border-pinky-100 sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-pinky-300 to-pinky-500 flex items-center justify-center text-white shadow-md shadow-pinky-200">
+                    <!-- Icon Camera SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                        <circle cx="12" cy="13" r="3"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-cute text-2xl text-pinky-500 leading-none tracking-wide">PeachBooth</h1>
+                    <p class="text-xs font-semibold text-pinky-400 mt-0.5">Studio Dải Ảnh Dễ Thương ✨</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button id="btnSoundToggle" onclick="toggleSound()" class="p-2.5 rounded-2xl bg-pinky-50 hover:bg-pinky-100 text-pinky-500 transition flex items-center gap-1.5 text-sm font-bold" title="Bật/Tắt âm thanh">
+                    <span id="soundIcon">🔊</span>
+                    <span class="hidden sm:inline">Âm thanh</span>
+                </button>
+                <button onclick="triggerUploadMode()" class="px-3.5 py-2.5 rounded-2xl bg-pinky-100 hover:bg-pinky-200 text-pinky-600 transition flex items-center gap-1.5 text-sm font-bold" title="Tải ảnh có sẵn từ máy">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span>Tải ảnh lên</span>
+                </button>
+                <input type="file" id="fileUploader" accept="image/*" multiple class="hidden" onchange="handleFileUpload(event)">
+            </div>
+        </div>
+    </header>
+
+    <!-- Nội dung chính -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- CỘT TRÁI: Camera & Bảng Điều Khiển (7 cột trên màn lớn) -->
+        <section class="lg:col-span-7 flex flex-col gap-5">
+            
+            <!-- Khung Camera -->
+            <div class="bg-white rounded-[2rem] p-4 sm:p-5 shadow-xl shadow-pinky-200/40 border-2 border-pinky-100">
+                <!-- Thanh trạng thái trên cùng của camera -->
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3 px-1">
+                    <div class="flex items-center gap-2">
+                        <span id="camStatusDot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span id="camStatusText" class="text-xs sm:text-sm font-bold text-slate-600">Đang kết nối camera...</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="btnMirror" onclick="toggleMirror()" class="px-3 py-1.5 rounded-xl bg-pinky-50 hover:bg-pinky-100 text-pinky-600 text-xs font-bold transition flex items-center gap-1">
+                            🪞 Lật gương: <span id="mirrorStateText">Bật</span>
+                        </button>
+                        <button id="btnSwitchCam" onclick="startCamera()" class="px-3 py-1.5 rounded-xl bg-pinky-50 hover:bg-pinky-100 text-pinky-600 text-xs font-bold transition">
+                            🔄 Mở lại Cam
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Khung hiển thị Video / Màn hình chờ -->
+                <div class="relative w-full aspect-[4/3] bg-pinky-50 rounded-3xl overflow-hidden border-2 border-pinky-100 flex items-center justify-center group">
+                    <!-- Video thực tế -->
+                    <video id="videoElement" autoplay playsinline muted class="w-full h-full object-cover mirror-video hidden"></video>
+
+                    <!-- Màn hình fallback khi không có camera -->
+                    <div id="cameraFallback" class="flex flex-col items-center justify-center text-center p-6 max-w-sm">
+                        <div class="w-16 h-16 rounded-full bg-pinky-100 text-pinky-400 flex items-center justify-center text-3xl mb-3">
+                            🎀
+                        </div>
+                        <h3 class="font-bold text-slate-700 text-lg mb-1">Chưa bật Camera</h3>
+                        <p id="fallbackMsg" class="text-sm text-slate-500 mb-4">Hãy cấp quyền truy cập camera để chụp ảnh trực tiếp, hoặc dùng chế độ chụp thử / tải ảnh có sẵn nhé!</p>
+                        <div class="flex flex-wrap justify-center gap-2">
+                            <button onclick="startCamera()" class="px-4 py-2.5 rounded-2xl bg-pinky-400 hover:bg-pinky-500 text-white font-bold text-sm shadow-md shadow-pinky-200 transition">
+                                📷 Bật Camera
+                            </button>
+                            <button onclick="enableDemoMode()" class="px-4 py-2.5 rounded-2xl bg-white border-2 border-pinky-200 hover:bg-pinky-50 text-pinky-500 font-bold text-sm transition">
+                                ✨ Dùng Chế Độ Mẫu
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Màn hình Demo Canvas (nếu máy không có webcam) -->
+                    <canvas id="demoCanvas" class="w-full h-full object-cover hidden"></canvas>
+
+                    <!-- Hiển thị đếm ngược lớn giữa màn hình -->
+                    <div id="countdownOverlay" class="absolute inset-0 bg-pinky-500/15 backdrop-blur-[1px] hidden items-center justify-center z-20 pointer-events-none">
+                        <div class="flex flex-col items-center">
+                            <span id="countdownNumber" class="text-8xl sm:text-9xl font-bold text-white drop-shadow-[0_6px_16px_rgba(244,77,135,0.6)]">3</span>
+                            <span id="countdownShotLabel" class="mt-2 px-4 py-1 rounded-full bg-white/90 text-pinky-500 font-bold text-sm shadow">Tấm 1 / 3</span>
+                        </div>
+                    </div>
+
+                    <!-- Hiệu ứng chớp đèn Flash -->
+                    <div id="flashOverlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none z-30"></div>
+
+                    <!-- Badge tiến độ chụp ở góc -->
+                    <div id="progressBadge" class="absolute top-3 left-3 px-3.5 py-1.5 rounded-full bg-white/85 backdrop-blur text-pinky-600 font-bold text-xs shadow-sm hidden z-10">
+                        📸 Đã chụp: <span id="shotProgressText">0/3</span>
+                    </div>
+                </div>
+
+                <!-- Nút Chụp Chính -->
+                <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
+                    <button id="btnStartCapture" onclick="startPhotoSession()" class="flex-1 sm:flex-none min-w-[220px] py-3.5 px-7 rounded-2xl bg-gradient-to-r from-pinky-400 to-pinky-500 hover:from-pinky-500 hover:to-pinky-600 text-white font-bold text-base shadow-lg shadow-pinky-300/60 active:scale-95 transition flex items-center justify-center gap-2.5">
+                        <span class="text-xl">📸</span>
+                        <span id="captureBtnLabel">Bắt đầu chụp (3 tấm)</span>
+                    </button>
+                    <button id="btnCancelCapture" onclick="cancelSession()" class="hidden py-3.5 px-5 rounded-2xl bg-rose-100 hover:bg-rose-200 text-rose-600 font-bold text-sm transition">
+                        ⏹️ Dừng chụp
+                    </button>
+                    <button onclick="resetPhotos()" class="py-3.5 px-5 rounded-2xl bg-pinky-50 hover:bg-pinky-100 text-pinky-600 border-2 border-pinky-100 font-bold text-sm transition flex items-center gap-1.5" title="Xóa các ảnh hiện tại">
+                        <span>🗑️</span>
+                        <span>Làm mới</span>
+                    </button>
+                </div>
+
+                <!-- Cụm chọn Kiểu chụp & Thời gian đếm ngược ngay bên dưới camera -->
+                <div class="mt-5 pt-5 border-t border-pinky-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Chọn số tấm ảnh -->
+                    <div>
+                        <label class="text-sm font-bold text-slate-700 flex items-center gap-1.5 mb-2">
+                            <span>🎞️</span> Kiểu dải ảnh
+                        </label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="setLayoutCount(2)" data-layout="2" class="layout-btn py-2.5 px-2 rounded-2xl border-2 border-pinky-100 bg-pinky-50/50 hover:bg-pinky-100 text-slate-600 font-bold text-sm transition flex flex-col items-center gap-1">
+                                <span>2 tấm</span>
+                                <span class="text-[10px] font-semibold opacity-75">Ngắn xinh</span>
+                            </button>
+                            <button onclick="setLayoutCount(3)" data-layout="3" class="layout-btn py-2.5 px-2 rounded-2xl border-2 border-pinky-400 bg-pinky-100 text-pinky-600 shadow-sm font-bold text-sm transition flex flex-col items-center gap-1">
+                                <span>3 tấm</span>
+                                <span class="text-[10px] font-semibold opacity-75">Phổ biến</span>
+                            </button>
+                            <button onclick="setLayoutCount(5)" data-layout="5" class="layout-btn py-2.5 px-2 rounded-2xl border-2 border-pinky-100 bg-pinky-50/50 hover:bg-pinky-100 text-slate-600 font-bold text-sm transition flex flex-col items-center gap-1">
+                                <span>5 tấm</span>
+                                <span class="text-[10px] font-semibold opacity-75">Dải dài</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chọn giây đếm ngược -->
+                    <div>
+                    <div class="flex items-baseline gap-2">
+                        <h1 class="font-cute text-2xl text-pinky-500 leading-none tracking-wide">PeachBooth</h1>
+                        <span class="hidden sm:inline text-[11px] font-semibold text-pinky-300">Studio Dải Ảnh ✨</span>
+                    </div>
+                    <!-- Thông tin người phát triển & chữ ký nhỏ gọn bên dưới tên app -->
+                    <div class="flex items-center gap-1.5 mt-1">
+                        <span class="text-[10px] font-bold tracking-wider uppercase text-slate-400">
+                            Dev: <span class="text-pinky-500">DINH CHIEN</span>
+                        </span>
+                        <span class="text-pinky-200 text-[10px]">•</span>
+                        <span class="relative inline-flex flex-col items-center leading-none select-none" title="Chữ ký nhà phát triển Dinh Chien">
+                            <span class="font-cute text-[11px] text-pinky-400 -rotate-3 tracking-wide">Dinh Chien</span>
+                            <svg class="w-12 h-1.5 -mt-0.5 text-pinky-300" viewBox="0 0 60 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2 5.5C16 2 38 1.5 58 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Khung Tùy Chỉnh Bộ Lọc & Phong Cách Dải Ảnh -->
+            <div class="bg-white rounded-[2rem] p-4 sm:p-5 shadow-xl shadow-pinky-200/40 border-2 border-pinky-100 flex flex-col gap-5">
+                <!-- Chọn Bộ Lọc Màu -->
+                <div>
+                    <label class="text-sm font-bold text-slate-700 flex items-center gap-1.5 mb-2.5">
+                        <span>✨</span> Bộ lọc màu ảnh
+                    </label>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="setFilter('none')" data-filter="none" class="filter-btn px-3.5 py-2 rounded-xl border-2 border-pinky-400 bg-pinky-100 text-pinky-600 shadow-sm text-xs sm:text-sm font-bold transition">Tự nhiên</button>
+                        <button onclick="setFilter('pastel')" data-filter="pastel" class="filter-btn px-3.5 py-2 rounded-xl border-2 border-pinky-100 bg-pinky-50/50 hover:bg-pinky-100 text-slate-600 text-xs sm:text-sm font-bold transition">🌸 Hồng Pastel</button>
+                        <button onclick="setFilter('bright')" data-filter="bright" class="filter-btn px-3.5 py-2 rounded-xl border-2 border-pinky-100 bg-pinky-50/50 hover:bg-pinky-100 text-slate-600 text-xs sm:text-sm font-bold transition">☀️ Sáng mịn</button>
+                        <button onclick="setFilter('bw')" data-filter="bw" class="filter-btn px-3.5 py-2 rounded-xl border-2 border-pinky-100 bg-pinky-50/50 hover:bg-pinky-100 text-slate-600 text-xs sm:text-sm font-bold transition">🖤 Đen trắng</button>
+                        <button onclick="setFilter('vintage')" data-filter="vintage" class="filter-btn px-3.5 py-2 rounded-xl border-2 border-pinky-100 bg-pinky-50/50 hover:bg-pinky-100 text-slate-600 text-xs sm:text-sm font-bold transition">🎞️ Vintage</button>
+                    </div>
+                </div>
+
+                <!-- Hàng 3: Chọn Chủ Đề Khung Dải Ảnh (Lấy cảm hứng từ ảnh mẫu & Nhân vật dễ thương) -->
+                <div>
+                    <div class="flex items-center justify-between mb-2.5">
+                        <label class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                            <span>🎨</span> Màu & Phong cách dải ảnh
+                        </label>
+                        <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-pinky-100 text-pinky-600">16 chủ đề</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto pr-1" id="themeSelector">
+                        <!-- 6 Chủ đề cơ bản -->
+                        <button onclick="setStripTheme('pink')" data-theme="pink" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-400 bg-pinky-50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#FFD6E4] border border-pinky-300 shrink-0 shadow-inner flex items-center justify-center text-xs">🌸</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Hồng Dâu</div>
+                                <div class="text-[10px] text-slate-400 truncate">Ngọt ngào</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('white')" data-theme="white" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-white border border-slate-300 shrink-0 flex items-center justify-center text-xs">📷</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Trắng Insta</div>
+                                <div class="text-[10px] text-slate-400 truncate">Tối giản</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('black')" data-theme="black" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#16181D] border border-slate-600 shrink-0 flex items-center justify-center text-xs">🎵</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Đen Hàn Quốc</div>
+                                <div class="text-[10px] text-slate-400 truncate">Nhạc Spotify</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('winter')" data-theme="winter" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#D9F0FF] border border-sky-300 shrink-0 flex items-center justify-center text-xs">❄️</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Xanh Mùa Đông</div>
+                                <div class="text-[10px] text-slate-400 truncate">Bầu trời</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('cream')" data-theme="cream" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#FDF6E7] border border-amber-200 shrink-0 flex items-center justify-center text-xs">🧈</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Kem Bơ</div>
+                                <div class="text-[10px] text-slate-400 truncate">Nhẹ nhàng</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('burgundy')" data-theme="burgundy" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#8B1E3F] border border-rose-900 shrink-0 flex items-center justify-center text-xs">🎓</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Đỏ Rượu</div>
+                                <div class="text-[10px] text-slate-400 truncate">Tốt nghiệp</div>
+                            </div>
+                        </button>
+
+                        <!-- 10 Chủ đề Nhân vật & Phong cách mới -->
+                        <button onclick="setStripTheme('hellokitty')" data-theme="hellokitty" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#FFF0F6] border border-rose-400 shrink-0 flex items-center justify-center text-xs">🎀</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Hello Kitty</div>
+                                <div class="text-[10px] text-slate-400 truncate">Nơ đỏ cute</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('doraemon')" data-theme="doraemon" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#29A8DF] border border-sky-600 shrink-0 flex items-center justify-center text-xs">🔔</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Doraemon</div>
+                                <div class="text-[10px] text-slate-400 truncate">Chuông vàng</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('kuromi')" data-theme="kuromi" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#2B213A] border border-purple-400 shrink-0 flex items-center justify-center text-xs">😈</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Kuromi</div>
+                                <div class="text-[10px] text-slate-400 truncate">Tím cá tính</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('cinnamoroll')" data-theme="cinnamoroll" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#E0F4FF] border border-sky-300 shrink-0 flex items-center justify-center text-xs">☁️</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Cinnamoroll</div>
+                                <div class="text-[10px] text-slate-400 truncate">Mây xanh</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('mymelody')" data-theme="mymelody" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#FFC5DC] border border-pink-400 shrink-0 flex items-center justify-center text-xs">🐰</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">My Melody</div>
+                                <div class="text-[10px] text-slate-400 truncate">Thỏ hồng</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('pikachu')" data-theme="pikachu" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#FFE44D] border border-amber-400 shrink-0 flex items-center justify-center text-xs">⚡</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Pikachu</div>
+                                <div class="text-[10px] text-slate-400 truncate">Vàng rực rỡ</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('lotso')" data-theme="lotso" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#D84A7E] border border-rose-500 shrink-0 flex items-center justify-center text-xs">🍓</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Gấu Dâu</div>
+                                <div class="text-[10px] text-slate-400 truncate">Hương dâu</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('capybara')" data-theme="capybara" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#EAD3B8] border border-amber-600/40 shrink-0 flex items-center justify-center text-xs">🍊</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Capybara</div>
+                                <div class="text-[10px] text-slate-400 truncate">Chill & Quýt</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('matcha')" data-theme="matcha" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-[#D8ECC8] border border-lime-500/50 shrink-0 flex items-center justify-center text-xs">🍵</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Matcha Cúc</div>
+                                <div class="text-[10px] text-slate-400 truncate">Xanh bơ</div>
+                            </div>
+                        </button>
+                        <button onclick="setStripTheme('y2k')" data-theme="y2k" class="theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 border-pinky-100 bg-white hover:bg-pinky-50/50 text-left transition">
+                            <span class="w-7 h-7 rounded-full bg-gradient-to-br from-[#F9A8D4] to-[#C4B5FD] border border-purple-300 shrink-0 flex items-center justify-center text-xs">💿</span>
+                            <div class="leading-tight min-w-0">
+                                <div class="text-xs font-bold text-slate-700 truncate">Y2K Dream</div>
+                                <div class="text-[10px] text-slate-400 truncate">Lấp lánh</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hàng 4: Chữ chú thích & Sticker trên dải ảnh -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    <div>
+                        <label for="captionInput" class="block text-xs font-bold text-slate-600 mb-1.5">💌 Chữ ký dưới dải ảnh</label>
+                        <input id="captionInput" type="text" maxlength="28" value="PeachBooth Studio ✨" oninput="renderFinalStrip()" placeholder="Nhập chữ của bạn..." class="w-full px-3.5 py-2 rounded-xl border-2 border-pinky-100 focus:border-pinky-400 focus:outline-none text-sm font-semibold text-slate-700 bg-pinky-50/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1.5">🎀 Nhãn dán trang trí</label>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="setStickerStyle('none')" data-sticker="none" class="sticker-btn flex-1 py-2 rounded-xl border-2 border-pinky-100 bg-white text-xs font-bold text-slate-500 transition">Không</button>
+                            <button onclick="setStickerStyle('hearts')" data-sticker="hearts" class="sticker-btn flex-1 py-2 rounded-xl border-2 border-pinky-400 bg-pinky-100 text-xs font-bold text-pinky-600 transition">💖 Tim</button>
+                            <button onclick="setStickerStyle('stars')" data-sticker="stars" class="sticker-btn flex-1 py-2 rounded-xl border-2 border-pinky-100 bg-white text-xs font-bold text-slate-500 transition">✨ Sao</button>
+                            <button onclick="setStickerStyle('bows')" data-sticker="bows" class="sticker-btn flex-1 py-2 rounded-xl border-2 border-pinky-100 bg-white text-xs font-bold text-slate-500 transition">🎀 Nơ</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CỘT PHẢI: Bản Xem Trước Dải Ảnh (Photo Strip Preview) (5 cột trên màn lớn) -->
+        <section class="lg:col-span-5 flex flex-col items-center">
+            <div class="w-full bg-white/90 backdrop-blur rounded-[2rem] p-5 shadow-xl shadow-pinky-200/40 border-2 border-pinky-100 flex flex-col items-center">
+                
+                <div class="w-full flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="font-bold text-slate-700 text-base flex items-center gap-1.5">
+                            <span>🖼️</span> Dải Ảnh Của Bạn
+                        </h2>
+                        <p class="text-xs text-slate-400 font-medium">Bấm vào từng ô trống hoặc nhấn chụp</p>
+                    </div>
+                    <span id="stripCountBadge" class="px-3 py-1 rounded-full bg-pinky-100 text-pinky-600 text-xs font-bold">
+                        3 tấm
+                    </span>
+                </div>
+
+                <!-- Khu vực hiển thị Canvas Dải Ảnh trực tiếp -->
+                <div class="w-full flex justify-center py-3 px-2 bg-gradient-to-b from-pinky-50/70 to-white rounded-3xl border border-pinky-100 overflow-y-auto max-h-[640px]">
+                    <canvas id="stripCanvas" class="max-w-[260px] sm:max-w-[280px] w-full h-auto rounded-lg strip-shadow transition-all duration-300"></canvas>
+                </div>
+
+                <!-- Thanh công cụ tải xuống & chia sẻ -->
+                <div class="w-full mt-5 flex flex-col gap-2.5">
+                    <button id="btnDownload" onclick="downloadStrip()" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-pinky-400 to-rose-400 hover:from-pinky-500 hover:to-rose-500 text-white font-bold text-sm sm:text-base shadow-lg shadow-pinky-200 active:scale-[0.98] transition flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span>Tải Dải Ảnh Về Máy (PNG)</span>
+                    </button>
+
+                    <!-- Hiện các nút chụp lại từng tấm nếu đã có ảnh -->
+                    <div id="retakeRow" class="hidden flex-wrap items-center justify-center gap-1.5 pt-1">
+                        <!-- Sẽ được sinh tự động bằng JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer nhỏ gọn -->
+    <footer class="text-center py-4 text-xs font-semibold text-pinky-400/80">
+        Made with 💖 by <span class="font-bold text-pinky-500">DINH CHIEN</span> • Hỗ trợ chụp 2, 3 và 5 tấm
+    </footer>
+
+    <!-- Canvas ẩn dùng để cắt/xử lý khung hình từ video -->
+    <canvas id="captureCanvas" class="hidden"></canvas>
+
+    <script>
+        /**
+         * ==========================================
+         * TRẠNG THÁI ỨNG DỤNG (APP STATE)
+         * ==========================================
+         */
+        const state = {
+            layoutCount: 3,         // 2, 3, hoặc 5 tấm
+            countdownSec: 3,        // 1, 3, 5, 10 giây
+            filter: 'none',         // none, pastel, bright, bw, vintage
+            theme: 'pink',          // pink, white, black, winter, cream, burgundy
+            sticker: 'hearts',      // none, hearts, stars, bows
+            isMirrored: true,       // Lật gương webcam
+            soundEnabled: true,     // Âm thanh đếm ngược & chụp
+            isCapturing: false,     // Đang trong phiên chụp
+            cancelRequested: false, // Hủy phiên chụp giữa chừng
+            demoMode: false,        // Chế độ mẫu khi không có webcam
+            stream: null,           // MediaStream của camera
+            photos: []              // Mảng chứa ảnh (Image objects hoặc null)
+        };
+
+        // Định nghĩa các chủ đề dải ảnh (lấy cảm hứng từ ảnh mẫu của người dùng)
+        const THEMES = {
+            pink: {
+                bg: '#FFD6E4',
+                border: '#FFB8D0',
+                text: '#B8336A',
+                subtext: '#D95D8F',
+                slotBg: '#FFF0F5',
+                accent: '#FF7AA8',
+                style: 'cute'
+            },
+            white: {
+                bg: '#FFFFFF',
+                border: '#F1F5F9',
+                text: '#1E293B',
+                subtext: '#64748B',
+                slotBg: '#F8FAFC',
+                accent: '#F44D87',
+                style: 'insta'
+            },
+            black: {
+                bg: '#16181D',
+                border: '#272A33',
+                text: '#FFFFFF',
+                subtext: '#94A3B8',
+                slotBg: '#23262F',
+                accent: '#FF7AA8',
+                style: 'spotify'
+            },
+            winter: {
+                bg: '#D9F0FF',
+                border: '#B3E0FF',
+                text: '#0369A1',
+                subtext: '#38BDF8',
+                slotBg: '#F0F9FF',
+                accent: '#0284C7',
+                style: 'winter'
+            },
+            cream: {
+                bg: '#FDF6E7',
+                border: '#F3E5C8',
+                text: '#8C6239',
+                subtext: '#B88B5D',
+                slotBg: '#FFFDF7',
+                accent: '#E09F5A',
+                style: 'cute'
+            },
+            burgundy: {
+                bg: '#8B1E3F',
+                border: '#6E1430',
+                text: '#FFF5F8',
+                subtext: '#FBCFE8',
+                slotBg: '#A62B50',
+                accent: '#FDE047',
+                style: 'grad'
+            },
+            // === 10 PHONG CÁCH MỚI ===
+            hellokitty: {
+                bg: '#FFF0F6',
+                border: '#FF85B3',
+                text: '#E11D48',
+                subtext: '#F472B6',
+                slotBg: '#FFFFFF',
+                accent: '#EF4444',
+                style: 'hellokitty'
+            },
+            doraemon: {
+                bg: '#29A8DF',
+                border: '#FFFFFF',
+                text: '#FFFFFF',
+                subtext: '#E0F2FE',
+                slotBg: '#EBF8FF',
+                accent: '#FACC15',
+                style: 'doraemon'
+            },
+            kuromi: {
+                bg: '#2B213A',
+                border: '#C084FC',
+                text: '#F5D0FE',
+                subtext: '#D8B4FE',
+                slotBg: '#3D2F52',
+                accent: '#F472B6',
+                style: 'kuromi'
+            },
+            cinnamoroll: {
+                bg: '#DFF4FF',
+                border: '#FFFFFF',
+                text: '#0284C7',
+                subtext: '#38BDF8',
+                slotBg: '#F8FDFF',
+                accent: '#7DD3FC',
+                style: 'cinnamoroll'
+            },
+            mymelody: {
+                bg: '#FFC5DC',
+                border: '#FFFFFF',
+                text: '#BE185D',
+                subtext: '#DB2777',
+                slotBg: '#FFF5F9',
+                accent: '#F43F5E',
+                style: 'mymelody'
+            },
+            pikachu: {
+                bg: '#FFE44D',
+                border: '#F59E0B',
+                text: '#78350F',
+                subtext: '#B45309',
+                slotBg: '#FEFCE8',
+                accent: '#EF4444',
+                style: 'pikachu'
+            },
+            lotso: {
+                bg: '#D84A7E',
+                border: '#FBCFE8',
+                text: '#FFF1F5',
+                subtext: '#FCE7F3',
+                slotBg: '#FCE4EC',
+                accent: '#FDE047',
+                style: 'lotso'
+            },
+            capybara: {
+                bg: '#EAD3B8',
+                border: '#C8A27A',
+                text: '#5C3A21',
+                subtext: '#8D5B34',
+                slotBg: '#FAF3EA',
+                accent: '#F97316',
+                style: 'capybara'
+            },
+            matcha: {
+                bg: '#D8ECC8',
+                border: '#A7CE8E',
+                text: '#365314',
+                subtext: '#4D7C0F',
+                slotBg: '#F4FAE8',
+                accent: '#FACC15',
+                style: 'matcha'
+            },
+            y2k: {
+                bg: '#FCE7F3',
+                bgEnd: '#DDD6FE',
+                border: '#E879F9',
+                text: '#701A75',
+                subtext: '#A21CAF',
+                slotBg: '#FFFFFF',
+                accent: '#EC4899',
+                style: 'y2k'
+            }
+        };
+
+        // Định nghĩa bộ lọc CSS / Canvas
+        const FILTERS = {
+            none: 'none',
+            pastel: 'brightness(1.08) contrast(0.95) saturate(1.15) hue-rotate(-6deg)',
+            bright: 'brightness(1.15) contrast(1.04) saturate(1.08)',
+            bw: 'grayscale(1) contrast(1.15) brightness(1.04)',
+            vintage: 'sepia(0.32) contrast(1.05) brightness(0.98) saturate(0.9)'
+        };
+
+        // Tham chiếu các phần tử DOM
+        const videoEl = document.getElementById('videoElement');
+        const demoCanvas = document.getElementById('demoCanvas');
+        const cameraFallback = document.getElementById('cameraFallback');
+        const camStatusDot = document.getElementById('camStatusDot');
+        const camStatusText = document.getElementById('camStatusText');
+        const stripCanvas = document.getElementById('stripCanvas');
+        const captureCanvas = document.getElementById('captureCanvas');
+        const countdownOverlay = document.getElementById('countdownOverlay');
+        const countdownNumber = document.getElementById('countdownNumber');
+        const countdownShotLabel = document.getElementById('countdownShotLabel');
+        const flashOverlay = document.getElementById('flashOverlay');
+        const progressBadge = document.getElementById('progressBadge');
+        const shotProgressText = document.getElementById('shotProgressText');
+
+        // AudioContext tạo âm thanh chụp ảnh không cần file ngoài
+        let audioCtx = null;
+        let demoAnimFrame = null;
+
+        /**
+         * ==========================================
+         * KHỞI TẠO KHI TẢI TRANG
+         * ==========================================
+         */
+        window.addEventListener('DOMContentLoaded', () => {
+            initPhotosArray(state.layoutCount);
+            renderFinalStrip();
+            startCamera();
+        });
+
+        function initPhotosArray(count) {
+            const oldPhotos = state.photos.slice();
+            state.photos = new Array(count).fill(null);
+            for (let i = 0; i < Math.min(oldPhotos.length, count); i++) {
+                state.photos[i] = oldPhotos[i];
+            }
+            updateRetakeButtons();
+        }
+
+        /**
+         * ==========================================
+         * QUẢN LÝ CAMERA & CHẾ ĐỘ MẪU (DEMO)
+         * ==========================================
+         */
+        async function startCamera() {
+            stopDemoMode();
+            setCamStatus('connecting', 'Đang kết nối camera...');
+
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Trình duyệt không hỗ trợ Camera API');
+                }
+
+                if (state.stream) {
+                    state.stream.getTracks().forEach(track => track.stop());
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 960 }
+                    },
+                    audio: false
+                });
+
+                state.stream = stream;
+                videoEl.srcObject = stream;
+                videoEl.classList.remove('hidden');
+                cameraFallback.classList.add('hidden');
+                demoCanvas.classList.add('hidden');
+                applyVideoFilter();
+
+                setCamStatus('ready', 'Camera sẵn sàng 💖');
+            } catch (err) {
+                console.warn('Không thể mở camera:', err);
+                videoEl.classList.add('hidden');
+                cameraFallback.classList.remove('hidden');
+                document.getElementById('fallbackMsg').textContent =
+                    'Không tìm thấy camera hoặc chưa được cấp quyền. Bạn có thể dùng Chế Độ Mẫu hoặc Tải ảnh từ máy lên nhé!';
+                setCamStatus('error', 'Chưa kết nối camera');
+            }
+        }
+
+        function setCamStatus(type, text) {
+            camStatusText.textContent = text;
+            camStatusDot.className = 'w-2.5 h-2.5 rounded-full ';
+            if (type === 'ready') {
+                camStatusDot.className += 'bg-emerald-400';
+            } else if (type === 'demo') {
+                camStatusDot.className += 'bg-pinky-400 animate-pulse';
+            } else if (type === 'connecting') {
+                camStatusDot.className += 'bg-amber-400 animate-pulse';
+            } else {
+                camStatusDot.className += 'bg-rose-400';
+            }
+        }
+
+        // Chế độ Mẫu (tạo hình động dễ thương để người dùng test chụp khi không có webcam)
+        function enableDemoMode() {
+            state.demoMode = true;
+            videoEl.classList.add('hidden');
+            cameraFallback.classList.add('hidden');
+            demoCanvas.classList.remove('hidden');
+            demoCanvas.width = 800;
+            demoCanvas.height = 600;
+            setCamStatus('demo', 'Chế độ Mẫu (Demo) ✨');
+            showToast('Đã bật chế độ Mẫu! Bạn có thể bấm chụp thử ngay.', 'info');
+
+            const ctx = demoCanvas.getContext('2d');
+            let t = 0;
+
+            function drawDemo() {
+                if (!state.demoMode) return;
+                t += 0.03;
+
+                // Nền gradient pastel chuyển động nhẹ
+                const grad = ctx.createLinearGradient(0, 0, 800, 600);
+                grad.addColorStop(0, '#FFE4EE');
+                grad.addColorStop(0.5, '#FFF5F8');
+                grad.addColorStop(1, '#E0F2FE');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 800, 600);
+
+                // Các bong bóng mờ dễ thương
+                for (let i = 0; i < 8; i++) {
+                    const x = 100 + i * 95 + Math.sin(t + i) * 20;
+                    const y = 120 + (i % 3) * 180 + Math.cos(t * 0.8 + i) * 25;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 28 + (i % 3) * 12, 0, Math.PI * 2);
+                    ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 168, 197, 0.28)' : 'rgba(186, 230, 253, 0.35)';
+                    ctx.fill();
+                }
+
+                // Nhân vật chú thỏ / mèo pastel dễ thương nhún nhảy ở giữa
+                const cx = 400;
+                const cy = 320 + Math.sin(t * 2) * 10;
+
+                // Tai thỏ
+                ctx.fillStyle = '#FFFFFF';
+                ctx.strokeStyle = '#FF7AA8';
+                ctx.lineWidth = 6;
+
+                ctx.beginPath();
+                ctx.ellipse(cx - 55, cy - 115, 24, 65, -0.18, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                ctx.beginPath();
+                ctx.ellipse(cx + 55, cy - 115, 24, 65, 0.18, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Tai trong màu hồng
+                ctx.fillStyle = '#FFC2D9';
+                ctx.beginPath();
+                ctx.ellipse(cx - 55, cy - 115, 11, 42, -0.18, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(cx + 55, cy - 115, 11, 42, 0.18, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Mặt tròn
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 105, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                // Mắt
+                ctx.fillStyle = '#334155';
+                const blink = Math.sin(t * 1.5) > 0.96;
+                if (blink) {
+                    ctx.lineWidth = 5;
+                    ctx.strokeStyle = '#334155';
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 50, cy - 10); ctx.lineTo(cx - 25, cy - 10);
+                    ctx.moveTo(cx + 25, cy - 10); ctx.lineTo(cx + 50, cy - 10);
+                    ctx.stroke();
+                } else {
+                    ctx.beginPath(); ctx.arc(cx - 38, cy - 10, 10, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(cx + 38, cy - 10, 10, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath(); ctx.arc(cx - 35, cy - 13, 3.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(cx + 41, cy - 13, 3.5, 0, Math.PI * 2); ctx.fill();
+                }
+
+                // Má hồng
+                ctx.fillStyle = 'rgba(255, 122, 168, 0.45)';
+                ctx.beginPath(); ctx.ellipse(cx - 60, cy + 16, 18, 10, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(cx + 60, cy + 16, 18, 10, 0, 0, Math.PI * 2); ctx.fill();
+
+                // Miệng cười dễ thương
+                ctx.strokeStyle = '#F44D87';
+                ctx.lineWidth = 5;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.arc(cx - 8, cy + 14, 8, 0.1 * Math.PI, 0.9 * Math.PI);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(cx + 8, cy + 14, 8, 0.1 * Math.PI, 0.9 * Math.PI);
+                ctx.stroke();
+
+                // Chữ vui vẻ
+                ctx.fillStyle = '#F44D87';
+                ctx.font = 'bold 26px Quicksand, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Say Cheese! ✨', cx, cy + 155);
+
+                demoAnimFrame = requestAnimationFrame(drawDemo);
+            }
+            drawDemo();
+            applyVideoFilter();
+        }
+
+        function stopDemoMode() {
+            state.demoMode = false;
+            if (demoAnimFrame) cancelAnimationFrame(demoAnimFrame);
+        }
+
+        /**
+         * ==========================================
+         * TÙY CHỈNH GIAO DIỆN & BỘ LỌC
+         * ==========================================
+         */
+        function toggleMirror() {
+            state.isMirrored = !state.isMirrored;
+            videoEl.classList.toggle('mirror-video', state.isMirrored);
+            document.getElementById('mirrorStateText').textContent = state.isMirrored ? 'Bật' : 'Tắt';
+        }
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            document.getElementById('soundIcon').textContent = state.soundEnabled ? '🔊' : '🔇';
+            showToast(state.soundEnabled ? 'Đã bật âm thanh chụp' : 'Đã tắt âm thanh', 'info');
+        }
+
+        function setLayoutCount(count) {
+            if (state.isCapturing) return;
+            state.layoutCount = count;
+            initPhotosArray(count);
+
+            // Cập nhật giao diện nút chọn
+            document.querySelectorAll('.layout-btn').forEach(btn => {
+                const isSelected = Number(btn.dataset.layout) === count;
+                btn.className = `layout-btn py-2.5 px-2 rounded-2xl border-2 font-bold text-sm transition flex flex-col items-center gap-1 ${
+                    isSelected
+                        ? 'border-pinky-400 bg-pinky-100 text-pinky-600 shadow-sm'
+                        : 'border-pinky-100 bg-pinky-50/50 hover:bg-pinky-100 text-slate-600'
+                }`;
+            });
+
+            document.getElementById('captureBtnLabel').textContent = `Bắt đầu chụp (${count} tấm)`;
+            document.getElementById('stripCountBadge').textContent = `${count} tấm`;
+            renderFinalStrip();
+        }
+
+        function setCountdownTime(sec) {
+            if (state.isCapturing) return;
+            state.countdownSec = sec;
+            document.querySelectorAll('.timer-btn').forEach(btn => {
+                const isSelected = Number(btn.dataset.timer) === sec;
+                btn.className = `timer-btn py-2.5 rounded-2xl border-2 font-bold text-sm transition ${
+                    isSelected
+                        ? 'border-pinky-400 bg-pinky-100 text-pinky-600 shadow-sm'
+                        : 'border-pinky-100 bg-pinky-50/50 hover:bg-pinky-100 text-slate-600'
+                }`;
+            });
+        }
+
+        function setFilter(filterKey) {
+            state.filter = filterKey;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const isSelected = btn.dataset.filter === filterKey;
+                btn.className = `filter-btn px-3.5 py-2 rounded-xl border-2 text-xs sm:text-sm font-bold transition ${
+                    isSelected
+                        ? 'border-pinky-400 bg-pinky-100 text-pinky-600 shadow-sm'
+                        : 'border-pinky-100 bg-pinky-50/50 hover:bg-pinky-100 text-slate-600'
+                }`;
+            });
+            applyVideoFilter();
+        }
+
+        function applyVideoFilter() {
+            const cssFilter = FILTERS[state.filter] || 'none';
+            videoEl.style.filter = cssFilter;
+            demoCanvas.style.filter = cssFilter;
+        }
+
+        function setStripTheme(themeKey) {
+            state.theme = themeKey;
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                const isSelected = btn.dataset.theme === themeKey;
+                btn.className = `theme-btn flex items-center gap-2.5 p-2.5 rounded-2xl border-2 text-left transition ${
+                    isSelected
+                        ? 'border-pinky-400 bg-pinky-50 shadow-sm'
+                        : 'border-pinky-100 bg-white hover:bg-pinky-50/50'
+                }`;
+            });
+            renderFinalStrip();
+        }
+
+        function setStickerStyle(styleKey) {
+            state.sticker = styleKey;
+            document.querySelectorAll('.sticker-btn').forEach(btn => {
+                const isSelected = btn.dataset.sticker === styleKey;
+                btn.className = `sticker-btn flex-1 py-2 rounded-xl border-2 text-xs font-bold transition ${
+                    isSelected
+                        ? 'border-pinky-400 bg-pinky-100 text-pinky-600'
+                        : 'border-pinky-100 bg-white text-slate-500 hover:bg-pinky-50'
+                }`;
+            });
+            renderFinalStrip();
+        }
+
+        /**
+         * ==========================================
+         * ÂM THANH ĐẾM NGƯỢC & TIẾNG CHỤP (WEB AUDIO API)
+         * ==========================================
+         */
+        function playBeep(freq = 680, duration = 0.09) {
+            if (!state.soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function playShutterSound() {
+            if (!state.soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                // Tạo tiếng "tách" máy ảnh ngắn bằng white noise
+                const bufferSize = audioCtx.sampleRate * 0.12;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.25));
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1800;
+
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start();
+            } catch (e) {}
+        }
+
+        /**
+         * ==========================================
+         * QUY TRÌNH CHỤP ẢNH LIÊN TIẾP & ĐẾM NGƯỢC
+         * ==========================================
+         */
+        async function startPhotoSession(singleSlotIndex = null) {
+            if (state.isCapturing) return;
+
+            // Kiểm tra nguồn hình ảnh
+            const hasVideo = state.stream && !videoEl.classList.contains('hidden');
+            if (!hasVideo && !state.demoMode) {
+                showToast('Hãy bật Camera hoặc chọn "Dùng Chế Độ Mẫu" trước khi chụp nhé!', 'warn');
+                return;
+            }
+
+            state.isCapturing = true;
+            state.cancelRequested = false;
+
+            document.getElementById('btnStartCapture').disabled = true;
+            document.getElementById('btnStartCapture').classList.add('opacity-60', 'cursor-not-allowed');
+            document.getElementById('btnCancelCapture').classList.remove('hidden');
+            progressBadge.classList.remove('hidden');
+
+            // Nếu chụp cả dải mới, xóa các ảnh cũ
+            const slotsToCapture = singleSlotIndex !== null
+                ? [singleSlotIndex]
+                : Array.from({ length: state.layoutCount }, (_, i) => i);
+
+            if (singleSlotIndex === null) {
+                state.photos = new Array(state.layoutCount).fill(null);
+                renderFinalStrip();
+            }
+
+            for (let step = 0; step < slotsToCapture.length; step++) {
+                if (state.cancelRequested) break;
+                const slotIdx = slotsToCapture[step];
+                shotProgressText.textContent = `${slotIdx + 1}/${state.layoutCount}`;
+
+                // Đếm ngược
+                const completed = await runCountdown(state.countdownSec, `Tấm ${slotIdx + 1} / ${state.layoutCount}`);
+                if (!completed || state.cancelRequested) break;
+
+                // Chụp khung hình
+                triggerFlash();
+                playShutterSound();
+                const capturedImg = await captureFrame();
+                state.photos[slotIdx] = capturedImg;
+                renderFinalStrip();
+
+                // Nghỉ ngắn giữa các tấm để người dùng đổi dáng
+                if (step < slotsToCapture.length - 1) {
+                    await sleep(650);
+                }
+            }
+
+            // Kết thúc phiên chụp
+            state.isCapturing = false;
+            countdownOverlay.classList.add('hidden');
+            countdownOverlay.classList.remove('flex');
+            document.getElementById('btnStartCapture').disabled = false;
+            document.getElementById('btnStartCapture').classList.remove('opacity-60', 'cursor-not-allowed');
+            document.getElementById('btnCancelCapture').classList.add('hidden');
+            progressBadge.classList.add('hidden');
+            updateRetakeButtons();
+
+            if (!state.cancelRequested) {
+                showToast('Xong rồi! Dải ảnh của bạn siêu dễ thương luôn 💖', 'success');
+            }
+        }
+
+        function cancelSession() {
+            state.cancelRequested = true;
+            showToast('Đã dừng chụp ảnh.', 'info');
+        }
+
+        async function runCountdown(seconds, label) {
+            countdownOverlay.classList.remove('hidden');
+            countdownOverlay.classList.add('flex');
+            countdownShotLabel.textContent = label;
+
+            for (let s = seconds; s >= 1; s--) {
+                if (state.cancelRequested) return false;
+                countdownNumber.textContent = s;
+                countdownNumber.classList.remove('countdown-pop');
+                void countdownNumber.offsetWidth; // trigger reflow
+                countdownNumber.classList.add('countdown-pop');
+
+                playBeep(s === 1 ? 920 : 620, 0.1);
+                await sleep(1000);
+            }
+
+            countdownOverlay.classList.add('hidden');
+            countdownOverlay.classList.remove('flex');
+            return !state.cancelRequested;
+        }
+
+        function triggerFlash() {
+            flashOverlay.classList.remove('flash-active');
+            void flashOverlay.offsetWidth;
+            flashOverlay.classList.add('flash-active');
+        }
+
+        function captureFrame() {
+            return new Promise((resolve) => {
+                const targetW = 800;
+                const targetH = 600; // Tỷ lệ 4:3 chuẩn dải photobooth
+                captureCanvas.width = targetW;
+                captureCanvas.height = targetH;
+                const ctx = captureCanvas.getContext('2d');
+
+                ctx.save();
+                ctx.filter = FILTERS[state.filter] || 'none';
+
+                const source = state.demoMode ? demoCanvas : videoEl;
+                const srcW = state.demoMode ? demoCanvas.width : (videoEl.videoWidth || 800);
+                const srcH = state.demoMode ? demoCanvas.height : (videoEl.videoHeight || 600);
+
+                // Cắt giữa (object-cover) để không bao giờ bị méo ảnh
+                const srcRatio = srcW / srcH;
+                const dstRatio = targetW / targetH;
+                let sx = 0, sy = 0, sw = srcW, sh = srcH;
+
+                if (srcRatio > dstRatio) {
+                    sw = srcH * dstRatio;
+                    sx = (srcW - sw) / 2;
+                } else {
+                    sh = srcW / dstRatio;
+                    sy = (srcH - sh) / 2;
+                }
+
+                if (!state.demoMode && state.isMirrored) {
+                    ctx.translate(targetW, 0);
+                    ctx.scale(-1, 1);
+                }
+
+                ctx.drawImage(source, sx, sy, sw, sh, 0, 0, targetW, targetH);
+                ctx.restore();
+
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.src = captureCanvas.toDataURL('image/png');
+            });
+        }
+
+        /**
+         * ==========================================
+         * TẢI ẢNH CÓ SẴN TỪ MÁY
+         * ==========================================
+         */
+        function triggerUploadMode() {
+            document.getElementById('fileUploader').click();
+        }
+
+        function handleFileUpload(event) {
+            const files = Array.from(event.target.files || []);
+            if (!files.length) return;
+
+            let loaded = 0;
+            files.slice(0, state.layoutCount).forEach((file, idx) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // Tìm ô trống hoặc ghi đè theo thứ tự
+                        const emptyIdx = state.photos.findIndex(p => p === null);
+                        const targetIdx = emptyIdx !== -1 ? emptyIdx : idx;
+                        state.photos[targetIdx] = img;
+                        loaded++;
+                        if (loaded === Math.min(files.length, state.layoutCount)) {
+                            renderFinalStrip();
+                            updateRetakeButtons();
+                            showToast(`Đã thêm ${loaded} ảnh vào dải ảnh!`, 'success');
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+            event.target.value = '';
+        }
+
+        function resetPhotos() {
+            state.photos = new Array(state.layoutCount).fill(null);
+            renderFinalStrip();
+            updateRetakeButtons();
+            showToast('Đã làm mới dải ảnh ✨', 'info');
+        }
+
+        function updateRetakeButtons() {
+            const retakeRow = document.getElementById('retakeRow');
+            const hasAnyPhoto = state.photos.some(p => p !== null);
+
+            if (!hasAnyPhoto) {
+                retakeRow.classList.add('hidden');
+                retakeRow.classList.remove('flex');
+                return;
+            }
+
+            retakeRow.classList.remove('hidden');
+            retakeRow.classList.add('flex');
+            retakeRow.innerHTML = '<span class="text-[11px] font-bold text-slate-400 mr-1">Chụp lại tấm:</span>';
+
+            for (let i = 0; i < state.layoutCount; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'px-2.5 py-1 rounded-xl bg-pinky-50 hover:bg-pinky-200 text-pinky-600 text-xs font-bold transition';
+                btn.textContent = `#${i + 1}`;
+                btn.title = `Chụp lại tấm số ${i + 1}`;
+                btn.onclick = () => startPhotoSession(i);
+                retakeRow.appendChild(btn);
+            }
+        }
+
+        /**
+         * ==========================================
+         * VẼ DẢI ẢNH CHẤT LƯỢNG CAO LÊN CANVAS (PHOTO STRIP)
+         * ==========================================
+         */
+        function renderFinalStrip() {
+            const count = state.layoutCount;
+            const theme = THEMES[state.theme] || THEMES.pink;
+            const caption = document.getElementById('captionInput').value.trim() || 'PeachBooth ✨';
+
+            // Kích thước chuẩn độ phân giải cao (tỷ lệ giống dải photobooth thực tế)
+            const stripW = 600;
+            const padX = 44;
+            const padTop = 64;
+            const gapY = 26;
+            const footerH = theme.style === 'spotify' ? 165 : (theme.style === 'insta' ? 140 : 145);
+
+            const photoW = stripW - padX * 2; // 512px
+            // Điều chỉnh tỷ lệ khung hình gọn đẹp (đặc biệt khi 5 tấm để dải không quá dài)
+            const photoH = count === 5 ? 310 : (count === 3 ? 360 : 384);
+
+            const stripH = padTop + count * photoH + (count - 1) * gapY + footerH;
+
+            stripCanvas.width = stripW;
+            stripCanvas.height = stripH;
+            const ctx = stripCanvas.getContext('2d');
+
+            // 1. Vẽ nền dải ảnh (hỗ trợ nền gradient cho Y2K)
+            if (theme.bgEnd) {
+                const bgGrad = ctx.createLinearGradient(0, 0, stripW, stripH);
+                bgGrad.addColorStop(0, theme.bg);
+                bgGrad.addColorStop(1, theme.bgEnd);
+                ctx.fillStyle = bgGrad;
+            } else {
+                ctx.fillStyle = theme.bg;
+            }
+            ctx.fillRect(0, 0, stripW, stripH);
+
+            // Vẽ họa tiết nền riêng cho từng chủ đề
+            drawThemeBackgroundPattern(ctx, theme, stripW, stripH, padTop, photoH, gapY, count);
+
+            // 2. Vẽ phần đầu dải ảnh (Header trang trí theo chủ đề)
+            ctx.fillStyle = theme.style === 'doraemon' ? '#FFFFFF' : theme.subtext;
+            ctx.font = '700 19px Quicksand, sans-serif';
+            ctx.textAlign = 'center';
+            const headerLabels = {
+                insta: '●   Instagram   ●',
+                winter: '❄️  WINTER MEMORY  ❄️',
+                grad: '🎓  BEST MOMENTS  🎓',
+                hellokitty: '🎀  HELLO KITTY STUDIO  🎀',
+                doraemon: '🔔  DORAEMON POCKET  🔔',
+                kuromi: '😈  KUROMI CLUB  🖤',
+                cinnamoroll: '☁️  CINNAMOROLL SKY  ☁️',
+                mymelody: '🐰  MY MELODY SWEET  🌸',
+                pikachu: '⚡  PIKA PIKA BOOTH!  ⚡',
+                lotso: '🍓  STRAWBERRY BEAR  🐻',
+                capybara: '🍊  CHILL CAPYBARA  🌿',
+                matcha: '🍵  MATCHA & DAISY  🌼',
+                y2k: '💿  ✦ Y2K DREAMBOOTH ✦  🦋'
+            };
+            ctx.fillText(headerLabels[theme.style] || '✦  PEACHBOOTH STUDIO  ✦', stripW / 2, 40);
+
+            // 3. Vẽ từng ô ảnh trên dải
+            for (let i = 0; i < count; i++) {
+                const x = padX;
+                const y = padTop + i * (photoH + gapY);
+                const radius = 14;
+
+                ctx.save();
+                drawRoundedRect(ctx, x, y, photoW, photoH, radius);
+                ctx.clip();
+
+                const img = state.photos[i];
+                if (img) {
+                    // Vẽ ảnh lấp đầy khung (object-cover)
+                    const imgRatio = img.width / img.height;
+                    const boxRatio = photoW / photoH;
+                    let sx = 0, sy = 0, sw = img.width, sh = img.height;
+
+                    if (imgRatio > boxRatio) {
+                        sw = img.height * boxRatio;
+                        sx = (img.width - sw) / 2;
+                    } else {
+                        sh = img.width / boxRatio;
+                        sy = (img.height - sh) / 2;
+                    }
+                    ctx.drawImage(img, sx, sy, sw, sh, x, y, photoW, photoH);
+                } else {
+                    // Ô trống chờ chụp
+                    ctx.fillStyle = theme.slotBg;
+                    ctx.fillRect(x, y, photoW, photoH);
+
+                    ctx.fillStyle = theme.subtext;
+                    ctx.globalAlpha = 0.55;
+                    ctx.font = '700 32px Quicksand, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`Tấm ${i + 1}`, x + photoW / 2, y + photoH / 2 + 10);
+                    ctx.globalAlpha = 1;
+                }
+                ctx.restore();
+
+                // Viền mảnh quanh khung ảnh
+                ctx.strokeStyle = theme.border;
+                ctx.lineWidth = 3;
+                drawRoundedRect(ctx, x, y, photoW, photoH, radius);
+                ctx.stroke();
+
+                // Vẽ Sticker trang trí ở góc ảnh nếu có chọn
+                if (state.sticker !== 'none') {
+                    drawCornerSticker(ctx, x, y, photoW, photoH, i, state.sticker);
+                }
+            }
+
+            // 4. Vẽ phần chân dải ảnh (Footer)
+            const footerStartY = padTop + count * photoH + (count - 1) * gapY;
+            const todayStr = new Date().toLocaleDateString('vi-VN', {
+                day: '2-digit', month: '2-digit', year: 'numeric'
+            });
+
+            if (theme.style === 'spotify') {
+                // Giao diện thanh nhạc giống dải ảnh đen trong hình mẫu!
+                const barY = footerStartY + 34;
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '700 24px Quicksand, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(caption, padX, barY);
+
+                ctx.fillStyle = '#94A3B8';
+                ctx.font = '600 16px Quicksand, sans-serif';
+                ctx.fillText(todayStr + ' • Photo Strip', padX, barY + 26);
+
+                // Thanh tiến trình nhạc
+                ctx.fillStyle = '#334155';
+                drawRoundedRect(ctx, padX, barY + 46, photoW, 6, 3);
+                ctx.fill();
+                ctx.fillStyle = '#FF7AA8';
+                drawRoundedRect(ctx, padX, barY + 46, photoW * 0.62, 6, 3);
+                ctx.fill();
+
+                // Nút điều khiển nhạc
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '700 28px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('♡       ⏮       ⏸       ⏭       ↻', stripW / 2, barY + 95);
+            } else if (theme.style === 'insta') {
+                // Giao diện Instagram giống ảnh mẫu ngoài cùng bên trái
+                const y0 = footerStartY + 38;
+                ctx.fillStyle = '#F44D87';
+                ctx.font = '28px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('♥   💬   ➤', padX, y0);
+
+                ctx.fillStyle = theme.text;
+                ctx.font = '700 24px Quicksand, sans-serif';
+                ctx.fillText(caption, padX, y0 + 38);
+
+                ctx.fillStyle = theme.subtext;
+                ctx.font = '600 16px Quicksand, sans-serif';
+                ctx.fillText(`#peachbooth  •  ${todayStr}`, padX, y0 + 66);
+            } else {
+                // Vẽ biểu tượng đặc trưng cho các chủ đề nhân vật ở phần chân dải ảnh
+                drawThemeFooterBadge(ctx, theme, stripW, footerStartY);
+
+                // Phong cách dễ thương / nhân vật chuẩn Hàn Quốc
+                ctx.fillStyle = theme.text;
+                ctx.font = '700 30px Quicksand, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(caption, stripW / 2, footerStartY + 78);
+
+                ctx.fillStyle = theme.subtext;
+                ctx.font = '600 18px Quicksand, sans-serif';
+                ctx.fillText(todayStr, stripW / 2, footerStartY + 112);
+            }
+        }
+
+        /**
+         * Vẽ họa tiết nền đặc trưng cho 16 chủ đề dải ảnh
+         */
+        function drawThemeBackgroundPattern(ctx, theme, stripW, stripH) {
+            ctx.save();
+            const s = theme.style;
+
+            if (s === 'winter') {
+                ctx.fillStyle = 'rgba(255,255,255,0.65)';
+                for (let i = 0; i < 24; i++) {
+                    ctx.beginPath();
+                    ctx.arc((i * 73) % stripW, (i * 137) % stripH, 3 + (i % 4), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (s === 'spotify') {
+                ctx.fillStyle = 'rgba(255,255,255,0.22)';
+                for (let i = 0; i < 30; i++) {
+                    ctx.beginPath();
+                    ctx.arc((i * 89) % stripW, (i * 151) % stripH, 1.5 + (i % 2), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (s === 'hellokitty') {
+                // Chấm bi hồng kẹo ngọt + ruy băng mảnh 2 bên
+                ctx.fillStyle = 'rgba(255, 133, 179, 0.25)';
+                for (let y = 20; y < stripH; y += 44) {
+                    for (let x = 18; x < stripW; x += 48) {
+                        ctx.beginPath();
+                        ctx.arc(x + ((y / 44) % 2) * 20, y, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            } else if (s === 'doraemon') {
+                // Dải vòng cổ đỏ đặc trưng của Doraemon ở phần footer & chấm trắng nhẹ
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+                for (let i = 0; i < 22; i++) {
+                    ctx.beginPath();
+                    ctx.arc((i * 97) % stripW, (i * 113) % stripH, 4 + (i % 3) * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                // Đường viền cổ áo đỏ trên cùng
+                ctx.fillStyle = '#E11D48';
+                ctx.fillRect(0, 0, stripW, 10);
+                ctx.fillRect(0, stripH - 12, stripW, 12);
+            } else if (s === 'kuromi') {
+                // Viền caro nhỏ 2 mép + sao tím lấp lánh
+                ctx.fillStyle = 'rgba(192, 132, 252, 0.22)';
+                for (let y = 0; y < stripH; y += 28) {
+                    ctx.fillRect(0, y, 14, 14);
+                    ctx.fillRect(stripW - 14, y + 14, 14, 14);
+                }
+                ctx.font = '20px sans-serif';
+                ctx.fillStyle = 'rgba(244, 114, 182, 0.45)';
+                for (let i = 0; i < 14; i++) {
+                    ctx.fillText(i % 2 === 0 ? '🖤' : '✦', 20 + (i % 2) * (stripW - 44), 90 + i * 110);
+                }
+            } else if (s === 'cinnamoroll') {
+                // Các đám mây trắng bồng bềnh
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
+                for (let y = 70; y < stripH; y += 160) {
+                    const cx = (y % 320 === 70) ? 26 : stripW - 26;
+                    ctx.beginPath();
+                    ctx.arc(cx, y, 22, 0, Math.PI * 2);
+                    ctx.arc(cx + 18, y + 6, 16, 0, Math.PI * 2);
+                    ctx.arc(cx - 18, y + 6, 16, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (s === 'mymelody') {
+                // Sọc kẻ hồng dâu nhẹ nhàng kiểu giấy gói quà
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+                for (let x = 0; x < stripW; x += 36) {
+                    ctx.fillRect(x, 0, 14, stripH);
+                }
+            } else if (s === 'pikachu') {
+                // Hai chấm má hồng tròn đặc trưng + tia sét nhỏ 2 bên mép
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.18)';
+                for (let y = 120; y < stripH - 120; y += 220) {
+                    ctx.beginPath(); ctx.arc(20, y, 14, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(stripW - 20, y + 90, 14, 0, Math.PI * 2); ctx.fill();
+                }
+            } else if (s === 'lotso') {
+                // Hạt dâu tây màu kem nhẹ
+                ctx.fillStyle = 'rgba(255, 241, 245, 0.28)';
+                for (let y = 30; y < stripH; y += 52) {
+                    for (let x = 20; x < stripW; x += 56) {
+                        ctx.beginPath();
+                        ctx.ellipse(x + ((y / 52) % 2) * 24, y, 3, 5, 0.2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            } else if (s === 'capybara') {
+                // Viền chấm đứt nét ấm áp kiểu sổ tay scrapbook
+                ctx.strokeStyle = 'rgba(141, 91, 52, 0.35)';
+                ctx.lineWidth = 4;
+                ctx.setLineDash([12, 10]);
+                drawRoundedRect(ctx, 14, 14, stripW - 28, stripH - 28, 18);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            } else if (s === 'matcha') {
+                // Hoa cúc trắng nhỏ 2 mép
+                ctx.font = '22px sans-serif';
+                for (let y = 100; y < stripH - 80; y += 135) {
+                    ctx.fillText('🌼', 10, y);
+                    ctx.fillText('🍃', stripW - 32, y + 60);
+                }
+            } else if (s === 'y2k') {
+                // Lưới pixel nhẹ + sao 4 cánh lấp lánh
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+                ctx.lineWidth = 1.5;
+                for (let x = 0; x < stripW; x += 40) {
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, stripH); ctx.stroke();
+                }
+                for (let y = 0; y < stripH; y += 40) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(stripW, y); ctx.stroke();
+                }
+            }
+            ctx.restore();
+        }
+
+        /**
+         * Vẽ biểu tượng nhỏ đặc trưng ở chân dải ảnh (Nơ Hello Kitty, Chuông Doraemon...)
+         */
+        function drawThemeFooterBadge(ctx, theme, stripW, footerStartY) {
+            ctx.save();
+            const cx = stripW / 2;
+            const cy = footerStartY + 30;
+
+            if (theme.style === 'hellokitty') {
+                // Vẽ chiếc nơ đỏ biểu tượng Hello Kitty
+                ctx.fillStyle = '#EF4444';
+                ctx.strokeStyle = '#991B1B';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.ellipse(cx - 18, cy, 15, 11, -0.25, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(cx + 18, cy, 15, 11, 0.25, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+            } else if (theme.style === 'doraemon') {
+                // Vẽ vòng cổ đỏ & chiếc chuông vàng Doraemon
+                ctx.fillStyle = '#E11D48';
+                drawRoundedRect(ctx, cx - 75, cy - 6, 150, 12, 6);
+                ctx.fill();
+                ctx.fillStyle = '#FACC15';
+                ctx.strokeStyle = '#B45309';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.arc(cx, cy + 4, 15, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#78350F';
+                ctx.beginPath();
+                ctx.arc(cx, cy + 8, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (['kuromi', 'cinnamoroll', 'mymelody', 'pikachu', 'lotso', 'capybara', 'matcha', 'y2k'].includes(theme.style)) {
+                const badges = {
+                    kuromi: '😈  💜  🎀  💜  😈',
+                    cinnamoroll: '☁️  🩵  ✨  🩵  ☁️',
+                    mymelody: '🐰  🌸  🎀  🌸  🐰',
+                    pikachu: '⚡  🔴  ✨  🔴  ⚡',
+                    lotso: '🍓  🐻  💖  🐻  🍓',
+                    capybara: '🍊  🐾  🌿  🐾  🍊',
+                    matcha: '🌼  🍵  🌱  🍵  🌼',
+                    y2k: '✦  💿  🦋  💿  ✦'
+                };
+                ctx.font = '22px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(badges[theme.style], cx, cy + 8);
+            }
+            ctx.restore();
+        }
+
+        function drawCornerSticker(ctx, x, y, w, h, index, type) {
+            const icons = {
+                hearts: ['💖', '💕', '💗', '🩷', '💞'],
+                stars: ['✨', '⭐', '🌟', '💫', '✨'],
+                bows: ['🎀', '🌸', '🌷', '🎀', '🦋']
+            };
+            const list = icons[type] || icons.hearts;
+            const icon = list[index % list.length];
+
+            ctx.save();
+            ctx.font = '34px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            // Xen kẽ góc trái trên và góc phải dưới cho sinh động
+            if (index % 2 === 0) {
+                ctx.fillText(icon, x + w - 12, y + 14);
+            } else {
+                ctx.fillText(icon, x + 14, y + h - 14);
+            }
+            ctx.restore();
+        }
+
+        function drawRoundedRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+
+        /**
+         * ==========================================
+         * TẢI XUỐNG DẢI ẢNH PNG
+         * ==========================================
+         */
+        function downloadStrip() {
+            const hasAnyPhoto = state.photos.some(p => p !== null);
+            if (!hasAnyPhoto) {
+                showToast('Bạn chưa chụp tấm ảnh nào! Hãy bấm chụp trước nhé 📸', 'warn');
+                return;
+            }
+
+            try {
+                const link = document.createElement('a');
+                const timestamp = new Date().toISOString().slice(0, 10);
+                link.download = `peachbooth-${state.layoutCount}tam-${timestamp}.png`;
+                link.href = stripCanvas.toDataURL('image/png', 1.0);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast('Đã tải dải ảnh chất lượng cao về máy! 🎉', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Có lỗi khi tải ảnh, vui lòng thử lại.', 'warn');
+            }
+        }
+
+        /**
+         * ==========================================
+         * TIỆN ÍCH (SLEEP & TOAST NOTIFICATION)
+         * ==========================================
+         */
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            let colors = 'bg-white border-pinky-200 text-pinky-600';
+            let icon = '✨';
+            if (type === 'success') {
+                colors = 'bg-pinky-500 border-pinky-400 text-white';
+                icon = '💖';
+            } else if (type === 'warn') {
+                colors = 'bg-amber-50 border-amber-300 text-amber-700';
+                icon = '💡';
+            }
+
+            toast.className = `pointer-events-auto px-4 py-3 rounded-2xl border-2 shadow-lg text-sm font-bold flex items-center gap-2 transition-all duration-300 translate-y-[-10px] opacity-0 ${colors}`;
+            toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
